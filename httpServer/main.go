@@ -19,7 +19,7 @@ func main() {
 		fmt.Println(err1)
 	}
 	http.HandleFunc("/healthz", log(healthz))
-	err := http.ListenAndServe("localhost:80", nil)
+	err := http.ListenAndServe("0.0.0.0:8080", nil)
 	if err != nil {
 		glog.Fatal("run failed, error: ", err.Error())
 	}
