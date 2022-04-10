@@ -1,0 +1,9 @@
+#config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: httpserver-config
+data:
+  port: "8080"
+  level: "4"
+  version: "100"
