@@ -4,7 +4,9 @@ import (
 	"context"
 	"flag"
 	"github.com/golang/glog"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"io"
+	"math/rand"
 	"net"
 	"net/http"
 	"os"
@@ -17,9 +19,11 @@ import (
 func main() {
 	flag.Parse()
 	flag.Set("v", os.Getenv("GO_LEVEL"))
+	Register()
 	mux := http.NewServeMux()
-	mux.HandleFunc("/", index)
-	mux.HandleFunc("healthz", healthz)
+	mux.HandleFunc("/index", index)
+	mux.HandleFunc("/healthz", healthz)
+	mux.Handle("/metrics", promhttp.Handler())
 	srv := http.Server{
 		Addr:    "0.0.0.0:" + os.Getenv("GO_PORT"),
 		Handler: mux,
@@ -29,7 +33,7 @@ func main() {
 
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			glog.Fatalf("listen: %s\n", err)
+			glog.Info("listen: %s\n", err)
 		}
 	}()
 	glog.V(4).Info("Server Started")
@@ -47,6 +51,11 @@ func main() {
 	glog.V(4).Info("Server Exited Properly")
 }
 
+func randInt(min int, max int) int {
+	rand.Seed(time.Now().UTC().UnixNano())
+	return min + rand.Intn(max-min)
+}
+
 func healthz(w http.ResponseWriter, r *http.Request) {
 	io.WriteString(w, "200")
 	w.WriteHeader(200)
@@ -54,9 +63,13 @@ func healthz(w http.ResponseWriter, r *http.Request) {
 
 func index(w http.ResponseWriter, r *http.Request) {
 	glog.V(4).Info("index start")
+	timer := NewTimer()
+	defer timer.ObserveTotal()
 	for k, v := range r.Header {
 		w.Header().Set(k, v[0])
 	}
+	delay := randInt(10, 2000)
+	time.Sleep(time.Millisecond * time.Duration(delay))
 	w.Header().Set("version", os.Getenv("VERSION"))
 	io.WriteString(w, "welcome to index!")
 	w.WriteHeader(200)

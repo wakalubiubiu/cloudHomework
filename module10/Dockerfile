@@ -1,6 +1,6 @@
 FROM golang:1.17.8-alpine3.15 as build
 RUN mkdir /go/src/homework/
-COPY main.go /go/src/homework/
+COPY main.go metrics.go /go/src/homework/
 RUN export GOPATH=/go 
 WORKDIR /go/src/homework
 ENV CGO_ENABLED=0
